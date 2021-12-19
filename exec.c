@@ -65,7 +65,7 @@ bool is_arm(const char* pathfile){
 
         }else{
             // it's not an ELF, don't invoke the interpreter.
-            it_is = true
+            it_is = true;
         }
     }  
     fclose(f); 
