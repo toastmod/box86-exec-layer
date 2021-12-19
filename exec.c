@@ -2,6 +2,7 @@
 /* exec LD_PRELOAD layer */
 /* credits:
 https://code.woboq.org/userspace/glibc/posix/execl.c.html
+https://code.woboq.org/userspace/glibc/posix/execle.c.html vbn
 https://stackoverflow.com/questions/37911702/overriding-execve-with-ld-preload-only-works-sometimes
 https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#File_header
  */
@@ -15,6 +16,7 @@ https://en.wikipedia.org/wiki/Executable_and_Linkable_Format#File_header
 #include<limits.h>
 #include<errno.h>
 #include<elf.h>
+#include<string.h>
 
 #ifdef BOX64SYS
 #define ELFW(TYPE) Elf64_ ## TYPE
@@ -173,7 +175,7 @@ int execvpe(const char* file, char* const argv[], char* const envp[]) {
 
 /* EXECL */
 
-int execl(const char* pathname, const char* arg, ... /*, (char *) NULL */) {
+int execl(const char* pathname, const char* arg, ...) {
     printf("execl\n");
     // old_execl = dlsym(RTLD_NEXT, "execl");
     // return old_execl(pathname, arg, NULL);
@@ -208,7 +210,7 @@ int execl(const char* pathname, const char* arg, ... /*, (char *) NULL */) {
 }
 
 /* EXECLP */
-int execlp(const char* file, const char* arg, ... /*, (char *) NULL */) {
+int execlp(const char* file, const char* arg, ...) {
     printf("execlp hook\n");
     // old_execlp = dlsym(RTLD_NEXT, "execlp");
     // return old_execlp(file, arg, NULL);
@@ -242,7 +244,7 @@ int execlp(const char* file, const char* arg, ... /*, (char *) NULL */) {
 
 }
 
-int execle(const char* pathname, const char* arg, ... /*, (char *) NULL */ , char* const envp[] ) {
+int execle(const char* pathname, const char* arg, ... ) {
     printf("execle hook\n");
     // old_execle = dlsym(RTLD_NEXT, "execle");
     // return old_execle(pathname, arg, NULL, envp);
@@ -263,12 +265,14 @@ int execle(const char* pathname, const char* arg, ... /*, (char *) NULL */ , cha
 
     /* define sized array */
     ptrdiff_t i;
+    char** envp;
     char* argv[argc + 1];
 
     /* arrange args */
     va_start (ap, arg);
     argv[0] = (char *) arg;
     for (i = 1; i <= argc; i++) argv[i] = va_arg (ap, char *);
+    envp = va_arg(ap, char**);
     va_end (ap);
     
     /* pass to execv_ */
